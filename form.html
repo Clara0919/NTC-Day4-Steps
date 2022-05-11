@@ -1,0 +1,162 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>form</title>
+</head>
+
+<body>
+    <div id="app">
+        <!--點擊@nextStep或＠prevStep後，emit把資料傳到setForm，再將帶來的資料放入updateForm()的formName-->
+        <!-- @update跟updateInfo()的關係同上 -->
+        <!-- ：form-data把資料從外面運用props傳進component裡面 -->
+        <keep-alive>
+            <component :is="currentForm" @set-form="updateForm" @update="updateInfo" :form-data="form"></component>
+        </keep-alive>
+
+    </div>
+
+
+    <script src="https://unpkg.com/vue@3"></script>
+
+    <script>
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    currentForm: 'personal-component',//預設值
+                    form: {},//用來放資料
+                }
+            },
+            methods: {
+                updateForm(formName) {
+                    this.currentForm = formName; //把 currentForm 更換成不同的 formName
+                },
+                // updateInfo(value) {                 這邊的value是下面watch到的value值
+                //     this.form['name'] = value;      把value放到上面form物件的name key
+                // }
+                //上面的方法只能傳一個value 但我們需要name phone 跟 address 的資料
+                updateInfo(inputData) {
+                    this.form[inputData.columnName] = inputData.columnValue;
+                },
+            }
+        });
+        app.component('personal-component', {
+
+            template: `
+            <label for="name">姓名</label>
+            <input type="text" name="name" v-model="name">
+            <br>
+            <label for="phone">電話</label>
+            <input type="tel" name="phone" v-model="phone">
+            <br>
+            <button @click="nextStep">下一步</button>`,
+            data() {
+                return {
+                    name: '',
+                    phone: '',
+                }
+            },
+            methods: {
+                nextStep() {
+                    this.$emit('set-form', 'address-component'); //觸發與 Vue 根實例綁定的事件（set-form是自訂事件名稱,address-component是要傳遞的元件資料）
+                }
+            },
+
+
+            watch: {
+                name: {
+                    // handler(value) {
+                    //     this.$emit('update', value)}
+
+                    handler(value) {
+                        this.$emit('update', { columnName: 'name', columnValue: value })
+                    }//這種寫法是要配合上面區別不同的key和value btw columnName跟columnValue是自訂名稱
+
+
+
+                },
+                phone: {
+                    handler(value) {
+                        this.$emit('update', { columnName: 'phone', columnValue: value })
+                    }
+                }
+            }
+
+        });
+
+        app.component('address-component', {
+            template: `
+            <label for="address">地址</label>
+            <input type="text" name="address" v-model="address">
+            <br>
+            <button @click="prevStep">上一步</button>
+            <button @click="nextStep">下一步</button>`,
+            data() {
+                return {
+                    address: ''
+                }
+            },
+            methods: {
+                nextStep() {
+                    this.$emit('set-form', 'final-component');
+                },
+                prevStep() {
+                    this.$emit('set-form', 'personal-component')
+                }
+
+            },
+            watch: {
+
+                address: {
+                    handler(value) {
+                        this.$emit('update', { columnName: 'address', columnValue: value })
+                    }
+                }
+
+            },
+
+        });
+
+        // {
+        //     name:"clara",
+        //     phone:"0910609569",
+        //     address:"taipei",
+        // }
+
+        app.component('final-component', {
+
+            template: `
+            <h3>請確認資料
+            <div>{{formData['name']}}</div>
+            <div>{{formData['phone']}}</div>
+            <div>{{formData['address']}}</div>
+            <button  @click="prevStep">上一步</button>`,
+            props: ['formData'], //把外部的資料拿進來用
+            methods: {
+                prevStep() {
+                    this.$emit('set-form', 'address-component')
+                }
+
+            },
+        });
+
+        app.mount("#app")
+
+
+
+
+
+
+
+    </script>
+
+</body>
+
+</html>
+
+</body>
+
+</html>
